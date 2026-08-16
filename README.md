@@ -20,6 +20,7 @@ This will only leave you with Ethernet and a Bluetooth head set.   _-]~~~~<📶 
 Nvidia inspector.
 
 https://github.com/xHybred/NvidiaProfileInspectorRevamped
+https://bitsum.com/download-process-lasso/
 
 
 1. Remove Sound.ps1 ( removes all sound )
@@ -30,4 +31,4 @@ https://github.com/xHybred/NvidiaProfileInspectorRevamped
 6. Run Nvidia.bat.  ( installs control panal )
 7. Install Fxsound.exe (Optional)  🎧 https://www.fxsound.com/
 8. Install SteamMini.ps1
-9. Will post more soon.
+9. install process lasso.
