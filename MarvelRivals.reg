@@ -1,5 +1,9 @@
 Windows Registry Editor Version 5.00
 
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\Marvel-Win64-Shipping.exe]
+"UseLargePages"=dword:00000001
+
 ; Marvel-Win64-Shipping.exe - Performance Options (Native)
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\Marvel-Win64-Shipping.exe\PerfOptions]
 "AuditLevel"=dword:00000000
