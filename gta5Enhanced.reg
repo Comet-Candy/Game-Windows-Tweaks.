@@ -4,6 +4,10 @@ Windows Registry Editor Version 5.00
 ; 1. IMAGE FILE EXECUTION OPTIONS (High Priority, IO, and Page Optimization)
 ; ====================================================================================
 
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\GTA5_Enhanced.exe]
+"UseLargePages"=dword:00000001
+
 ; GTA5_enhanced.exe - Native
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\GTA5_enhanced.exe\PerfOptions]
 "AuditLevel"=dword:00000000
