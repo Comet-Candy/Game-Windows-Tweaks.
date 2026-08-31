@@ -1,4 +1,4 @@
-# VibrantColorSync_FinalFix.ps1
+
 # POLICY OVERRIDE: Clears PowerShell execution constraints immediately.
 # ANTI-INVERSION ENGINE: Hard-blocks FilterType 1 (Inverted) and sets universal Deuteranopia (3).
 # DISPLAY REGULATOR: Forces your preferred 70% Night Light and cleans Magnifier hooks.
