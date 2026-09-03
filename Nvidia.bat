@@ -1,135 +1,40 @@
-<<<<<<< HEAD
 @echo off
-SETLOCAL ENABLEDELAYEDEXPANSION
+SETLOCAL
 
-:: Configuration
-set "SOURCE_PATH=C:\Program Files\WindowsApps\NVIDIACorp.NVIDIAControlPanel_8.1.969.0_x64__56jybvy8sckqj"
-set "DEST_DIR=C:\NVIDIA_ControlPanel_Win32"
-set "EXE_NAME=nvcplui.exe"
+set "ZIP=%~dp0NVIDIACorp.NVIDIAControlPanel_8.1.969.0_x64__56jybvy8sckqj.zip"
+set "DEST=%ProgramFiles%\NVIDIA Corporation\Control Panel Client"
 
-echo ==========================================
-echo NVIDIA Control Panel: UWP to Win32 Bridge
-echo ==========================================
+echo Extracting...
+if exist "%DEST%" rmdir /s /q "%DEST%"
+mkdir "%DEST%"
+tar -xf "%ZIP%" -C "%DEST%" nvcplui.exe nvcpluir.dll nvImage.dll NvGpuUtilization.exe resources.pri
 
-:: 1. Check Admin Rights
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo [ERROR] Please run this script as Administrator.
-    pause
-    exit /b 1
-)
+echo Writing launcher...
+(
+echo sc.exe config NVDisplay.ContainerLocalSystem start= demand ^>nul 2^>^&1
+echo net start NVDisplay.ContainerLocalSystem ^>nul 2^>^&1
+echo start "" "%DEST%\nvcplui.exe"
+) > "%DEST%\launch.bat"
 
-:: 2. Take Ownership of the Source Folder
-:: Note: This modifies ACLs on a protected system folder.
-echo [STEP 1] Taking ownership of WindowsApps NVIDIA folder...
-takeown /F "%SOURCE_PATH%" /R /A /D Y >nul 2>&1
-icacls "%SOURCE_PATH%" /grant Administrators:F /T /Q >nul 2>&1
-if %errorLevel% neq 0 (
-    echo [WARNING] Failed to modify permissions. You may need to manually take ownership in Properties > Security.
-)
+echo Configuring registry...
+reg add "HKCU\Software\NVIDIA Corporation\NVControlPanel2\Client" /v ShowSedoanEula /t REG_DWORD /d 1 /f
+reg add "HKCU\Software\NVIDIA Corporation\Global\NvCplApi\Policies" /v ContextUIPolicy /t REG_DWORD /d 0 /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "%DEST%\nvcplui.exe" /t REG_SZ /d "~ RUNASADMIN" /f
 
-:: 3. Create Destination Directory
-echo [STEP 2] Creating Win32 directory...
-if not exist "%DEST_DIR%" mkdir "%DEST_DIR%"
+echo Registering context menu...
+reg delete "HKCR\Directory\Background\shell\NVIDIAControlPanel" /f >nul 2>&1
+reg delete "HKCR\DesktopBackground\Shell\NVIDIAControlPanel" /f >nul 2>&1
+reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel" /ve /t REG_SZ /d "NVIDIA Control Panel" /f
+reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel" /v "Icon" /t REG_SZ /d "%DEST%\nvcpluir.dll,0" /f
+reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel\command" /ve /t REG_SZ /d "conhost --headless \"%DEST%\launch.bat\"" /f
 
-:: 4. Copy Essential Files
-echo [STEP 3] Copying executable and dependencies...
-:: We copy the whole folder content to ensure DLL dependencies are met
-xcopy "%SOURCE_PATH%\*" "%DEST_DIR%\" /E /I /H /Y >nul 2>&1
+echo Creating Start Menu shortcut...
+powershell -NoProfile -Command "$ws=New-Object -ComObject WScript.Shell;$sc=$ws.CreateShortcut('%ProgramData%\Microsoft\Windows\Start Menu\Programs\NVIDIA Control Panel.lnk');$sc.TargetPath='%DEST%\nvcplui.exe';$sc.IconLocation='%DEST%\nvcpluir.dll,0';$sc.Save()"
 
-if not exist "%DEST_DIR%\%EXE_NAME%" (
-    echo [ERROR] Failed to copy nvcplui.exe. Check if the source path version matches your installed version.
-    echo Expected: %SOURCE_PATH%
-    pause
-    exit /b 1
-)
+taskkill /f /im explorer.exe >nul 2>&1
+del /f /q "%localappdata%\IconCache.db" >nul 2>&1
+del /f /q "%localappdata%\Microsoft\Windows\Explorer\iconcache*" >nul 2>&1
+start explorer.exe
 
-:: 5. Register Context Menu (The "Win32" Feel)
-echo [STEP 4] Registering Desktop Context Menu...
-:: We create a registry key that invokes the copied executable directly.
-:: This bypasses the UWP launcher and acts like the old Win32 app.
-
-reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel" /ve /t REG_SZ /d "NVIDIA Control Panel" /f >nul
-reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel" /v "Icon" /t REG_SZ /d "%DEST_DIR%\nvcplui.exe" /f >nul
-reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel" /v "Position" /t REG_SZ /d "Bottom" /f >nul
-reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel\command" /ve /t REG_SZ /d "\"%DEST_DIR%\%EXE_NAME%\"" /f >nul
-
-echo.
-echo ==========================================
-echo SUCCESS!
-echo ==========================================
-echo 1. The app has been copied to: %DEST_DIR%
-echo 2. Right-click on your Desktop to see "NVIDIA Control Panel".
-echo.
-echo NOTE: If the panel opens but settings don't save, 
-echo the UWP restriction is blocking write access. 
-echo In that case, reinstalling the Store App is recommended.
-pause   
-=======
-@echo off
-SETLOCAL ENABLEDELAYEDEXPANSION
-
-:: Configuration
-set "SOURCE_PATH=C:\Program Files\WindowsApps\NVIDIACorp.NVIDIAControlPanel_8.1.969.0_x64__56jybvy8sckqj"
-set "DEST_DIR=C:\NVIDIA_ControlPanel_Win32"
-set "EXE_NAME=nvcplui.exe"
-
-echo ==========================================
-echo NVIDIA Control Panel: UWP to Win32 Bridge
-echo ==========================================
-
-:: 1. Check Admin Rights
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo [ERROR] Please run this script as Administrator.
-    pause
-    exit /b 1
-)
-
-:: 2. Take Ownership of the Source Folder
-:: Note: This modifies ACLs on a protected system folder.
-echo [STEP 1] Taking ownership of WindowsApps NVIDIA folder...
-takeown /F "%SOURCE_PATH%" /R /A /D Y >nul 2>&1
-icacls "%SOURCE_PATH%" /grant Administrators:F /T /Q >nul 2>&1
-if %errorLevel% neq 0 (
-    echo [WARNING] Failed to modify permissions. You may need to manually take ownership in Properties > Security.
-)
-
-:: 3. Create Destination Directory
-echo [STEP 2] Creating Win32 directory...
-if not exist "%DEST_DIR%" mkdir "%DEST_DIR%"
-
-:: 4. Copy Essential Files
-echo [STEP 3] Copying executable and dependencies...
-:: We copy the whole folder content to ensure DLL dependencies are met
-xcopy "%SOURCE_PATH%\*" "%DEST_DIR%\" /E /I /H /Y >nul 2>&1
-
-if not exist "%DEST_DIR%\%EXE_NAME%" (
-    echo [ERROR] Failed to copy nvcplui.exe. Check if the source path version matches your installed version.
-    echo Expected: %SOURCE_PATH%
-    pause
-    exit /b 1
-)
-
-:: 5. Register Context Menu (The "Win32" Feel)
-echo [STEP 4] Registering Desktop Context Menu...
-:: We create a registry key that invokes the copied executable directly.
-:: This bypasses the UWP launcher and acts like the old Win32 app.
-
-reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel" /ve /t REG_SZ /d "NVIDIA Control Panel" /f >nul
-reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel" /v "Icon" /t REG_SZ /d "%DEST_DIR%\nvcplui.exe" /f >nul
-reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel" /v "Position" /t REG_SZ /d "Bottom" /f >nul
-reg add "HKCR\DesktopBackground\Shell\NVIDIAControlPanel\command" /ve /t REG_SZ /d "\"%DEST_DIR%\%EXE_NAME%\"" /f >nul
-
-echo.
-echo ==========================================
-echo SUCCESS!
-echo ==========================================
-echo 1. The app has been copied to: %DEST_DIR%
-echo 2. Right-click on your Desktop to see "NVIDIA Control Panel".
-echo.
-echo NOTE: If the panel opens but settings don't save, 
-echo the UWP restriction is blocking write access. 
-echo In that case, reinstalling the Store App is recommended.
-pause   
->>>>>>> ea82be7 (Initial commit)
+echo Done.
+pause
