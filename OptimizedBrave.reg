@@ -1,16 +1,22 @@
 Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallForcelist]
-"1"="cjpalhdlnbpafiamejdnhcphjbkeiagm"
-"2"="fhcgjolkccmbidfldomjliifgaodjagh"
-"3"="nkgllhigpcljnhoakjkgaieabnkmgdkb"
-"4"="edibdbjcniadpccecjdfdjjppcpchdlm"
-"5"="mnjggcdmjocbbbhaepdhchncahnbgone"
-"6"="bbeaicapbccfllodepmimpkgecanonai"
-"7"="jaadjnlkjnhohljficgoddcjmndjfdmi"
-"8"="ldpochfccmkkmhdbclfhpagapcfdljkj"
-"9"="lckanjgmijmafbedllaakclkaicjfmnk"
-"10"="pkehgijcmpdhfbdbbnkijodmdjhbjlgp"
+"1"="edibdbjcniadpccecjdfdjjppcpchdlm"
+"2"="mnjggcdmjocbbbhaepdhchncahnbgone"
+"3"="bbeaicapbccfllodepmimpkgecanonai"
+"4"="jaadjnlkjnhohljficgoddcjmndjfdmi"
+"5"="ldpochfccmkkmhdbclfhpagapcfdljkj"
+"6"="lckanjgmijmafbedllaakclkaicjfmnk"
+"7"="mlomiejdfkolichcflejclcbmpeaniij"
+"8"="dejhhgdpambaambdifcfbmpliolehfaj"
+"9"="dbepggeogbaibhgnhhndojpepiihcmeb"
+"10"="infppggnoaenmfagbfknfkancpbljcca"
+"11"="chphlpgkkbolifaimnlloiipkdnihall"
+"12"="bmmcjfagflcghljhclhfbhbdgjgkibam"
+"13"="fdpofaadaohfkbbkcmccjefhegijbfjb"
+"14"="nlipnmloinkkcbpnhkphcpjhachlbdpa"
+"15"="nlipnmloinkkcbpnhkphcpjhachlbdpa"
+"16"="mlomiejdfkolichcflejclcbmpeaniij"
 
 [HKEY_CURRENT_USER\Software\Policies\BraveSoftware\Brave]
 "SuppressUnsupportedOSWarning"=dword:00000001
