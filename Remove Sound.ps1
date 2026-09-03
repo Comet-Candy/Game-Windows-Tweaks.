@@ -1,6 +1,6 @@
 # Requires Administrator privileges
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    WriteWarning "Please run this script as an Administrator!"
+    Write-Warning "Please run this script as an Administrator!"
     Break
 }
 
@@ -11,7 +11,6 @@ $excludePatterns = @("*Ethernet*", "*Network*", "*Controller*", "*GbE*", "*Wi-Fi
 Write-Host "Scanning for devices..." -ForegroundColor Cyan
 
 # 2. Retrieve and Filter Devices
-# We get all devices, then filter by FriendlyName using the patterns
 $allDevices = Get-PnpDevice -Status 'OK' | Where-Object { $_.FriendlyName }
 
 $targetDevices = $allDevices | Where-Object {
@@ -48,15 +47,12 @@ if ($targetDevices.Count -eq 0) {
 Write-Host "Found $($targetDevices.Count) matching device(s):" -ForegroundColor Green
 $targetDevices | ForEach-Object { Write-Host " - $($_.FriendlyName) ($($_.InstanceId))" }
 
-# 3. Action: Disable Devices (Recommended for "Removal")
-# Disabling stops the device from functioning without deleting the driver files, 
-# which is safer and reversible.
+# 3. Action: Disable Devices
 Write-Host "`n[Step 1] Disabling devices..." -ForegroundColor Yellow
 
 foreach ($device in $targetDevices) {
     try {
         Write-Host "Disabling: $($device.FriendlyName)..." -NoNewline
-        # -Confirm:$false bypasses the manual interactive prompt for each device
         Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false -ErrorAction Stop
         Write-Host " [Success]" -ForegroundColor Green
     }
@@ -65,3 +61,5 @@ foreach ($device in $targetDevices) {
         Write-Warning "Could not disable $($device.FriendlyName). Error: $_"
     }
 }
+
+Write-Host "`nProcess complete!" -ForegroundColor Cyan
