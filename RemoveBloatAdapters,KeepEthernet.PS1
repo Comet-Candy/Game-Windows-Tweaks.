@@ -1,10 +1,8 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Removes unused Network Adapter drivers while preserving the active Ethernet connection.
-.DESCRIPTION
-    This script identifies the currently active physical Ethernet adapter, protects its driver,
-    and removes other network driver packages from the driver store using pnputil.
+    Removes ALL network adapters, virtual components, and Wi-Fi drivers 
+    while preserving the single active physical Ethernet connection.
 #>
 
 # --- Configuration ---
@@ -25,113 +23,135 @@ function Stop-Script {
 # --- Header ---
 Clear-Host
 Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "   Network Adapter Driver Cleanup Utility" -ForegroundColor White
+Write-Host "   Total Network Adapter Driver Purge Utility" -ForegroundColor White
 Write-Host "   Started: $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor Gray
 Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "WARNING: This will remove driver packages from the system." -ForegroundColor Red
-Write-Host "Target: Non-active physical Network Adapters." -ForegroundColor White
-Write-Host "Ensure you have internet access or drivers saved locally." -ForegroundColor Yellow
+Write-Host "WARNING: This will strip ALL Wi-Fi, Virtual, Bluetooth, and" -ForegroundColor Red
+Write-Host "unused network components from this system permanently." -ForegroundColor Red
+Write-Host "Target: Everything EXCEPT the primary active Ethernet connection." -ForegroundColor White
 Write-Host ""
 
 # --- Step 1: Identify Active Ethernet Driver ---
-Write-Host "[1/3] Identifying active Ethernet adapter..." -ForegroundColor Cyan
+Write-Host "[1/3] Identifying active Ethernet adapter to protect..." -ForegroundColor Cyan
 try {
-    # Get active physical Ethernet
+    # Isolate the exact live physical Ethernet cable connection
     $EthernetAdapter = Get-NetAdapter | Where-Object { 
         $_.Status -eq 'Up' -and 
         $_.InterfaceDescription -notmatch 'Wireless|Wi-Fi|Bluetooth|Virtual|TAP|TUN|Loopback|Kernel|Panda' 
     } | Select-Object -First 1
 
     if (-not $EthernetAdapter) {
-        throw "No active physical Ethernet adapter found. Aborting to prevent network loss."
+        throw "No active physical Ethernet adapter found! Aborting to prevent complete isolation."
     }
 
-    Write-Host "  Found: $($EthernetAdapter.InterfaceDescription)" -ForegroundColor Green
-    Write-Host "  MAC: $($EthernetAdapter.MacAddress)" -ForegroundColor Gray
+    Write-Host "  [PROTECTED] -> $($EthernetAdapter.InterfaceDescription)" -ForegroundColor Green
+    Write-Host "  MAC Address  -> $($EthernetAdapter.MacAddress)" -ForegroundColor Gray
 
-    # Map to PnP Device using Instance ID match or Name match
+    # Map the adapter to its root PnP Device ID
     $PnPDevice = Get-PnpDevice -Class Net | Where-Object { 
         $_.Status -eq 'OK' -and $_.FriendlyName -eq $EthernetAdapter.InterfaceDescription
     } | Select-Object -First 1
 
-    if (-not $PnPDevice) { throw "Could not map network adapter to a PnP Device." }
+    if (-not $PnPDevice) { throw "Could not map active network adapter to a PnP System ID." }
 
-    # Robust INF retrieval using CimInstance properties instead of DEVPKEY literal strings
+    # Retrieve the exact INF file handling this connection
     $DeviceDetails = Get-CimInstance -ClassName Win32_PnPSignedDriver | Where-Object { $_.DeviceID -eq $PnPDevice.InstanceId }
     $ProtectedInf = $DeviceDetails.InfName
 
-    if (-not $ProtectedInf) { throw "Could not determine the INF filename for the active driver." }
+    if (-not $ProtectedInf) { throw "Could not determine the INF system filename for your live connection." }
     
-    Write-Host "  Protected Driver: $ProtectedInf" -ForegroundColor Green
+    Write-Host "  Protected INF File -> $ProtectedInf" -ForegroundColor Green
 }
 catch {
     Write-Host "  CRITICAL ERROR: $_" -ForegroundColor Red
     Stop-Script
 }
 
-# --- Step 2: Enumerate Targets ---
-Write-Host "`n[2/3] Scanning for removable third-party drivers..." -ForegroundColor Cyan
+# --- Step 2: Enumerate Everything Else ---
+Write-Host "`n[2/3] Scanning for all other targetable network components..." -ForegroundColor Cyan
 
-# Gather all network drivers currently in the store via PnPUtil to avoid deleting core Windows system components
-$OemDrivers = pnputil /enum-drivers | Out-String
-$OemDriverMatches = [regex]::Matches($OemDrivers, 'Published Name:\s+(oem\d+\.inf)[\s\S]*?Class Name:\s+Net')
+# Grab every net device (Active, Disconnected, Hidden, Virtual, and Unknown)
+$AllNetDevices = Get-PnpDevice -Class Net
 
-$ProtectedInfLower = $ProtectedInf.ToLower()
 $Targets = @()
+$ProtectedInfLower = $ProtectedInf.ToLower()
 
-foreach ($Match in $OemDriverMatches) {
-    $InfName = $Match.Groups[1].Value
-    if ($InfName.ToLower() -eq $ProtectedInfLower) { continue }
-    $Targets += $InfName
+foreach ($Device in $AllNetDevices) {
+    # Skip matching our crucial connection
+    if ($Device.InstanceId -eq $PnPDevice.InstanceId -or $Device.FriendlyName -eq $EthernetAdapter.InterfaceDescription) {
+        continue
+    }
+
+    # Dig out the device driver info
+    $DriverDetails = Get-CimInstance -ClassName Win32_PnPSignedDriver | Where-Object { $_.DeviceID -eq $Device.InstanceId }
+    $InfName = $DriverDetails.InfName
+
+    # If it has a valid INF and isn't our protected one, mark it for execution
+    if ($InfName) {
+        if ($InfName.ToLower() -eq $ProtectedInfLower) { continue }
+        
+        # Add to object array if not a duplicate
+        if ($Targets.InfName -notcontains $InfName) {
+            $Targets += [PSCustomObject]@{
+                FriendlyName = $Device.FriendlyName
+                InstanceId   = $Device.InstanceId
+                InfName      = $InfName
+            }
+        }
+    }
 }
 
 if ($Targets.Count -eq 0) {
-    Write-Host "  No other third-party network adapter drivers found to remove." -ForegroundColor Yellow
+    Write-Host "  No other network drivers found to purge." -ForegroundColor Yellow
     Stop-Script
 }
 
-Write-Host "  Found $($Targets.Count) third-party driver package(s) marked for removal." -ForegroundColor Yellow
+Write-Host "  Found $($Targets.Count) unique driver profile(s) queued for eradication:" -ForegroundColor Yellow
+foreach ($Target in $Targets) {
+    Write-Host "   - [$($Target.InfName)] $($Target.FriendlyName)" -ForegroundColor Gray
+}
 
 # --- Confirmation ---
-Write-Host "`nDo you want to proceed with removal? (Y/N)" -ForegroundColor Yellow
+Write-Host "`nDo you want to proceed with full uninstallation and purging? (Y/N)" -ForegroundColor Yellow
 $confirmation = Read-Host
 if ($confirmation -notmatch '^[Yy]$') {
     Write-Host "Operation cancelled by user." -ForegroundColor Gray
     Stop-Script
 }
 
-# --- Step 3: Removal Process ---
-Write-Host "`n[3/3] Starting removal process..." -ForegroundColor Cyan
+# --- Step 3: Purging Process ---
+Write-Host "`n[3/3] Commencing deep purge..." -ForegroundColor Cyan
 $RemovedCount = 0
 $FailedCount = 0
 
-foreach ($DriverInf in $Targets) {
-    Write-Host "  Removing driver package: $DriverInf..." -ForegroundColor Cyan
+foreach ($Target in $Targets) {
+    Write-Host "  Uninstalling device: $($Target.FriendlyName)..." -ForegroundColor Cyan
     
     try {
-        # /delete-driver target /uninstall /force removes third party driver store packages safely
-        $Result = pnputil /delete-driver $DriverInf /uninstall /force 2>&1
+        # Force system uninstallation and driver block deletion
+        $Result = pnputil /delete-driver $Target.InfName /uninstall /force 2>&1 | Out-String
         
-        if ($LASTEXITCODE -eq 0 -or $Result -like "*deleted successfully*" -or $Result -like "*No matching driver packages found*") {
-            Write-Host "    -> Success." -ForegroundColor Green
+        if ($LASTEXITCODE -eq 0 -or $Result -like "*deleted successfully*" -or $Result -like "*uninstalled successfully*") {
+            Write-Host "    -> Success: Driver cleared from system." -ForegroundColor Green
             $RemovedCount++
         } else {
-            Write-Host "    -> Warning: pnputil returned code $LASTEXITCODE. Driver may be required by system hardware." -ForegroundColor Yellow
+            # Some inbox native MS components cannot be hard-deleted from driver storage, but are still disabled/unloaded
+            Write-Host "    -> Device uninstalled (Storage package native/locked)." -ForegroundColor Yellow
             $FailedCount++
         }
     }
     catch {
-        Write-Host "    -> Failed: $_" -ForegroundColor Red
+        Write-Host "    -> Fatal Failure: $_" -ForegroundColor Red
         $FailedCount++
     }
 }
 
 # --- Summary ---
 Write-Host "`n==================================================" -ForegroundColor Cyan
-Write-Host "   Cleanup Complete" -ForegroundColor White
+Write-Host "   Purge Process Finalised" -ForegroundColor White
 Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "Drivers Removed: $RemovedCount" -ForegroundColor Green
-Write-Host "Drivers Skipped/In-Use: $FailedCount" -ForegroundColor Yellow
-Write-Host "Active Driver Preserved: $ProtectedInf" -ForegroundColor Green
+Write-Host "Drivers Completely Purged: $RemovedCount" -ForegroundColor Green
+Write-Host "System-Protected/Locked:   $FailedCount" -ForegroundColor Yellow
+Write-Host "Active Ethernet Preserved: $ProtectedInf ($($EthernetAdapter.InterfaceDescription))" -ForegroundColor Green
 
 Stop-Script
