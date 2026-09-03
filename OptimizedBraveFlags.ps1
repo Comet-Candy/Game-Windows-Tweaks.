@@ -1,5 +1,5 @@
-# Brave Browser Enterprise-Grade Performance & Security Script
-# This script eliminates duplicate icons across all system directories and replaces them with optimized versions.
+# Brave Browser Advanced Engine Optimization Script
+# This script applies performance switches that can ONLY be enabled via shortcuts, completely bypassing registry overlaps.
 
 # 1. Locate the Brave Browser installation directory
 $BravePath = "$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe"
@@ -12,34 +12,17 @@ if (-not (Test-Path $BravePath)) {
     Exit
 } 
 
-# 2. Build the Advanced Optimization & Security Flags List
+# 2. Build the Advanced Shortcut-Only Engine Switches (No registry overlaps)
 $Flags = @( 
-    # --- PERFORMANCE & RESOURCE OPTIMISATION ---
-    "--process-per-site",                     # Groups same-site tabs into a single process to save massive RAM
-    "--enable-parallel-downloading",          # Forces multi-threaded downloading for significantly faster speeds
-    "--disable-fetching-hints-at-navigation", # Disables speculative resource fetching to save bandwidth/CPU
-    "--disable-background-networking",        # Stops unrequested background connections and browser telemetry
-    "--disable-default-apps",                 # Prevents loading default background apps on startup
-    "--disable-component-update",             # Delays non-critical component checks until required 
-
-    # --- HARDWARE & GPU ACCELERATION ---
+    # --- SHORTCUT-ONLY HARDWARE & RENDERING ENGINE TWEAKS ---
     "--ignore-gpu-blocklist",                 # Forces hardware acceleration even on unsupported drivers
     "--enable-gpu-rasterization",             # Uses the GPU to render 2D web graphics faster
     "--enable-zero-copy",                     # Writes graphics memory directly to GPU to lower CPU overhead
     "--canvas-oop-rasterization",             # Moves canvas rendering out of the main thread to prevent UI freezing
     "--enable-hardware-overlays",             # Offloads video and UI overlays directly to video hardware 
 
-    # --- PRIVACY & SECURITY HARDENING ---
-    "--disable-reading-from-canvas",          # Blocks websites from abusing canvas elements to fingerprint your PC
-    "--disable-breakpad",                     # Disables crash dumps and reporting to external telemetry servers
-    "--disable-crash-reporter",               # Completely turns off the background crash reporting service
-    "--disable-client-side-phishing-detection", # Stops sending URL metadata to lookup services (Brave Shields handles this locally)
-    "--password-store=basic",                 # Uses local obfuscation instead of tying browser credentials to OS accounts
-    "--no-pings",                             # Blocks hyperlink auditing used by advertisers to track clicks 
-
-    # --- PROCESS & SANDBOX ISOLATION ---
-    "--disable-shared-workers",               # Prevents background scripts from sharing data across multiple tabs
-    "--enable-features=IsolatedPrerenderScoping,V8VmFuture" # Forces strict modern engine isolation and V8 optimisations
+    # --- ADVANCED ENGINE CORE HARDENING & V8 ISOLATION ---
+    "--enable-features=IsolatedPrerenderScoping,V8VmFuture" # Forces strict modern engine isolation and V8 rendering speeds
 ) 
 
 # Join the array into a single space-separated string
@@ -80,7 +63,7 @@ foreach ($Target in $Targets) {
         $Shortcut = $WshShell.CreateShortcut($Target)
         $Shortcut.TargetPath = $BravePath
         $Shortcut.Arguments = $Switches
-        $Shortcut.Description = "Brave Browser with Advanced Performance & Security Tweaks"
+        $Shortcut.Description = "Brave Browser with Advanced Shortcut-Only Performance Tweaks"
         $Shortcut.IconLocation = "$BravePath,0"
         $Shortcut.Save()
     } catch {
@@ -88,4 +71,4 @@ foreach ($Target in $Targets) {
     }
 }
 
-Write-Host "Success! All old shortcuts across your Desktop, Start Menu, and Taskbar have been successfully replaced." -ForegroundColor Green
+Write-Host "Success! Shortcut-only optimizations applied. Standard registry configurations avoided." -ForegroundColor Green
