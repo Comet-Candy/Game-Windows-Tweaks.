@@ -530,4 +530,6 @@ if ($TargetRegKey) {
 Write-Host ""
 Write-Host "All tweaks applied to: $TargetName ($TypeLabel)" -ForegroundColor Green
 Write-Host "MAC: $($TargetAdapter.MacAddress)" -ForegroundColor Cyan
-Write-Host "Please restart your computer immediately to initialize settings." -ForegroundColor Yellow   
+Write-Host "Please restart your computer immediately to initialize settings." -ForegroundColor Yellow
+
+Pause
