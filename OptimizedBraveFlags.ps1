@@ -1,88 +1,69 @@
-# Brave Browser Enterprise-Grade Engine Tweak Injector
-# This script applies a massive array of shortcut-only engine flags, safely ignoring registry overlaps.
+# Brave Core Application Engine Policy Injector (Full Massive Performance Expansion)
+# This script injects your complete advanced engine profile straight into Brave's Local State file.
 
-# 1. Locate the Brave Browser installation directory
-$BravePath = "$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe"
-if (-not (Test-Path $BravePath)) {
-    $BravePath = "${env:ProgramFiles(x86)}\BraveSoftware\Brave-Browser\Application\brave.exe"
-} 
+# 1. Close open Brave instances to prevent file lock write issues
+Write-Host "Closing open Brave processes to ensure file write access..." -ForegroundColor Yellow
+Stop-Process -Name "brave" -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 2
 
-if (-not (Test-Path $BravePath)) {
-    Write-Error "Brave Browser installation not found. Please ensure Brave is installed."
+# 2. Locate the Local State Configuration File
+$LocalStatePath = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Local State"
+
+if (-not (Test-Path $LocalStatePath)) {
+    Write-Error "Could not find Brave's Local State config file. Run Brave at least once first."
     Exit
-} 
+}
 
-# 2. Build the Ultimate Engine Optimization Flag List (No Registry Overlaps)
-$Flags = @( 
-    # --- HARDWARE ACCELERATION & ADVANCED RENDERING ENGINE ---
-    "--ignore-gpu-blocklist",                 # Forces hardware acceleration even on unsupported drivers
-    "--enable-gpu-rasterization",             # Uses the GPU to render 2D web graphics faster
-    "--enable-zero-copy",                     # Writes graphics memory directly to GPU to lower CPU overhead
-    "--canvas-oop-rasterization",             # Moves canvas rendering out of the main thread to prevent UI freezing
-    "--enable-hardware-overlays",             # Offloads video and UI overlays directly to video hardware
-    "--enable-raw-draw",                      # Drastically fast-tracks render raster pipelines straight to graphics memory
-    "--enable-gpu-compositing",               # Offloads layout drawing pipelines straight to the dedicated GPU
-    "--enable-oop-rasterization",             # Handles massive 2D vector graphic layouts outside the main process
-    
-    # --- MULTI-THREADING & PROCESS CPU PRIORITISATION ---
-    "--enable-drdc",                          # Enables Decoupled Display Lists to process UI commands on dual threads
-    "--enable-threaded-compositing",          # Processes scrolling and animations on a completely separate thread
-    "--num-raster-threads=4",                 # Dedicates 4 aggressive system processing threads strictly to image rendering
-    "--enable-vulkan",                        # Unlocks high-performance API processing on compatible graphics hardware
-    
-    # --- MEMORY, CACHE & GRAPHICS OVERHAUL ---
-    "--enable-skia-graphite",                 # Forces the modern high-velocity rendering pipeline engine back-end
-    "--enable-gpu-memory-buffer-video-frames",# Forces video frame processing to pass through physical GPU VRAM structures
-    "--gpu-no-context-lost",                  # Instructs the layout engine to never drop rendering memory stacks on frame lag
-    
-    # --- ENHANCED ENGINE SECURITY & SANDBOX HARDENING ---
-    "--enable-features=IsolatedPrerenderScoping,V8VmFuture,BlockInsecurePrivateNetworkRequests" # Forces strict modern engine isolation, V8 speeds, and modern script blockades
-) 
+# 3. Read the existing JSON tree configuration map
+$JsonData = Get-Content -Raw -Path $LocalStatePath | ConvertFrom-Json
 
-# Join the array into a single space-separated string
-$Switches = $Flags -join " " 
+# 4. Initialize target preference trees if they are empty or missing
+if (-not $JsonData.browser) { 
+    $JsonData | Add-Member -MemberType NoteProperty -Name browser -Value ([PSCustomObject]@{}) 
+}
+if (-not $JsonData.browser.enabled_labs_experiments) { 
+    $JsonData.browser | Add-Member -MemberType NoteProperty -Name enabled_labs_experiments -Value @() 
+}
 
-# 3. Define all potential old shortcut target locations
-$Targets = @(
-    [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "Brave.lnk"),               # User Desktop
-    [System.IO.Path]::Combine($env:Public, "Desktop\Brave.lnk"),                                    # Public Desktop
-    [System.IO.Path]::Combine([Environment]::GetFolderPath("StartMenu"), "Programs\Brave.lnk"),     # User Start Menu
-    [System.IO.Path]::Combine($env:ProgramData, "Microsoft\Windows\Start Menu\Programs\Brave.lnk"), # System Start Menu
-    "$env:APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\Brave.lnk"           # Taskbar Pin
+# 5. Define the complete massive list of advanced internal engine flags
+$TargetFlags = @(
+    # --- HARDWARE ACCELERATION & RENDER TUNING ---
+    "ignore-gpu-blocklist@1",
+    "enable-gpu-rasterization@1",
+    "enable-zero-copy@1",
+    "canvas-oop-rasterization@1",
+    "enable-hardware-overlays@1",
+    "enable-raw-draw@1",
+    "enable-gpu-compositing@1",
+    "enable-oop-rasterization@1",
+    
+    # --- MULTI-THREADING & SYSTEM SCHEDULING ---
+    "enable-drdc@1",
+    "enable-threaded-compositing@1",
+    "num-raster-threads@4",
+    "enable-vulkan@1",
+    
+    # --- MEMORY & VIDEO ENGINE OVERHAULS ---
+    "enable-skia-graphite@1",
+    "enable-gpu-memory-buffer-video-frames@1",
+    "gpu-no-context-lost@1"
 )
 
-# 4. Wipe out all old shortcuts found in those locations
-foreach ($Target in $Targets) {
-    if (Test-Path $Target) {
-        Remove-Item $Target -Force -ErrorAction SilentlyContinue
+# 6. Convert the internal collection array to strong string types to fix serialization bugs
+[string[]]$CurrentExperiments = $JsonData.browser.enabled_labs_experiments
+
+# Merge new tweaks cleanly without modifying manual experiments you already toggled
+foreach ($Flag in $TargetFlags) {
+    if ($CurrentExperiments -notcontains $Flag) {
+        $CurrentExperiments += $Flag
     }
 }
 
-# 5. Re-generate clean, optimized shortcuts in every relevant user location
-$WshShell = New-Object -ComObject WScript.Shell
+# Apply the fully merged array back into the JSON structure
+$JsonData.browser.enabled_labs_experiments = $CurrentExperiments
 
-foreach ($Target in $Targets) {
-    # Skip public/system folders during rewrite so Windows doesn't create duplicate visual overlays
-    if ($Target -eq [System.IO.Path]::Combine($env:Public, "Desktop\Brave.lnk") -or $Target -eq [System.IO.Path]::Combine($env:ProgramData, "Microsoft\Windows\Start Menu\Programs\Brave.lnk")) {
-        continue
-    }
+# 7. Output the structural engine update cleanly back to the Local State file
+$UpdatedJson = ConvertTo-Json $JsonData -Depth 100
+Set-Content -Path $LocalStatePath -Value $UpdatedJson -Encoding UTF8
 
-    try {
-        # Ensure target folder tree actually exists before attempting to write a shortcut
-        $TargetDir = Split-Path $Target
-        if (-not (Test-Path $TargetDir)) {
-            New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
-        }
-
-        $Shortcut = $WshShell.CreateShortcut($Target)
-        $Shortcut.TargetPath = $BravePath
-        $Shortcut.Arguments = $Switches
-        $Shortcut.Description = "Brave Browser with Ultimate Shortcut-Only Performance Tweaks"
-        $Shortcut.IconLocation = "$BravePath,0"
-        $Shortcut.Save()
-    } catch {
-        # Silently skip if a path is restricted or inaccessible
-    }
-}
-
-Write-Host "Success! Added massive performance and security switches. Safe from all registry file constraints." -ForegroundColor Green
+Write-Host "Success! Your massive performance tweak library is now successfully injected into Brave's engine core." -ForegroundColor Green
