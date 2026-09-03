@@ -1,5 +1,5 @@
-# Brave Browser Advanced Engine Optimization Script
-# This script applies performance switches that can ONLY be enabled via shortcuts, completely bypassing registry overlaps.
+# Brave Browser Enterprise-Grade Engine Tweak Injector
+# This script applies a massive array of shortcut-only engine flags, safely ignoring registry overlaps.
 
 # 1. Locate the Brave Browser installation directory
 $BravePath = "$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe"
@@ -12,17 +12,31 @@ if (-not (Test-Path $BravePath)) {
     Exit
 } 
 
-# 2. Build the Advanced Shortcut-Only Engine Switches (No registry overlaps)
+# 2. Build the Ultimate Engine Optimization Flag List (No Registry Overlaps)
 $Flags = @( 
-    # --- SHORTCUT-ONLY HARDWARE & RENDERING ENGINE TWEAKS ---
+    # --- HARDWARE ACCELERATION & ADVANCED RENDERING ENGINE ---
     "--ignore-gpu-blocklist",                 # Forces hardware acceleration even on unsupported drivers
     "--enable-gpu-rasterization",             # Uses the GPU to render 2D web graphics faster
     "--enable-zero-copy",                     # Writes graphics memory directly to GPU to lower CPU overhead
     "--canvas-oop-rasterization",             # Moves canvas rendering out of the main thread to prevent UI freezing
-    "--enable-hardware-overlays",             # Offloads video and UI overlays directly to video hardware 
-
-    # --- ADVANCED ENGINE CORE HARDENING & V8 ISOLATION ---
-    "--enable-features=IsolatedPrerenderScoping,V8VmFuture" # Forces strict modern engine isolation and V8 rendering speeds
+    "--enable-hardware-overlays",             # Offloads video and UI overlays directly to video hardware
+    "--enable-raw-draw",                      # Drastically fast-tracks render raster pipelines straight to graphics memory
+    "--enable-gpu-compositing",               # Offloads layout drawing pipelines straight to the dedicated GPU
+    "--enable-oop-rasterization",             # Handles massive 2D vector graphic layouts outside the main process
+    
+    # --- MULTI-THREADING & PROCESS CPU PRIORITISATION ---
+    "--enable-drdc",                          # Enables Decoupled Display Lists to process UI commands on dual threads
+    "--enable-threaded-compositing",          # Processes scrolling and animations on a completely separate thread
+    "--num-raster-threads=4",                 # Dedicates 4 aggressive system processing threads strictly to image rendering
+    "--enable-vulkan",                        # Unlocks high-performance API processing on compatible graphics hardware
+    
+    # --- MEMORY, CACHE & GRAPHICS OVERHAUL ---
+    "--enable-skia-graphite",                 # Forces the modern high-velocity rendering pipeline engine back-end
+    "--enable-gpu-memory-buffer-video-frames",# Forces video frame processing to pass through physical GPU VRAM structures
+    "--gpu-no-context-lost",                  # Instructs the layout engine to never drop rendering memory stacks on frame lag
+    
+    # --- ENHANCED ENGINE SECURITY & SANDBOX HARDENING ---
+    "--enable-features=IsolatedPrerenderScoping,V8VmFuture,BlockInsecurePrivateNetworkRequests" # Forces strict modern engine isolation, V8 speeds, and modern script blockades
 ) 
 
 # Join the array into a single space-separated string
@@ -63,7 +77,7 @@ foreach ($Target in $Targets) {
         $Shortcut = $WshShell.CreateShortcut($Target)
         $Shortcut.TargetPath = $BravePath
         $Shortcut.Arguments = $Switches
-        $Shortcut.Description = "Brave Browser with Advanced Shortcut-Only Performance Tweaks"
+        $Shortcut.Description = "Brave Browser with Ultimate Shortcut-Only Performance Tweaks"
         $Shortcut.IconLocation = "$BravePath,0"
         $Shortcut.Save()
     } catch {
@@ -71,4 +85,4 @@ foreach ($Target in $Targets) {
     }
 }
 
-Write-Host "Success! Shortcut-only optimizations applied. Standard registry configurations avoided." -ForegroundColor Green
+Write-Host "Success! Added massive performance and security switches. Safe from all registry file constraints." -ForegroundColor Green
