@@ -1,47 +1,76 @@
-$SteamDir = "C:\Program Files (x86)\Steam"
-$SteamExe = "$SteamDir\steam.exe"
-$ConfigPath = "$SteamDir\config\config.vdf"
-$Flags = "-nofriendsui -no-dwrite -nointro -nobigpicture -nofasthtml -nocrashmonitor -noshaders -no-shared-textures -disablehighdpi -cef-single-process -cef-in-process-gpu -single_core -disable-winh264 -vrdisable -cef-disable-breakpad -cef-disable-d3d11 -cef-disable-gpu-compositing -cef-disable-gpu -cef-disable-js-logging -cef-disable-occlusion -cef-disable-renderer-restart -noconsole -oldtraymenu -showallbetas +open steam://open/minigameslist"
-$ShortcutPath = "$env:USERPROFILE\Desktop\Steam.lnk"
+# Steam Shortcut - All flags + Library + cleanup old shortcuts
 
-# Kill Steam
-Stop-Process -Name "steam" -Force -ErrorAction SilentlyContinue
-Stop-Process -Name "steamwebhelper" -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 3
+$steamPath = "C:\Program Files (x86)\Steam\Steam.exe"
+$shortcutPath = "$env:USERPROFILE\Desktop\Steam.lnk"
 
-# Create/overwrite desktop shortcut
-$WshShell = New-Object -ComObject WScript.Shell
-$Shortcut = $WshShell.CreateShortcut($ShortcutPath)
-$Shortcut.TargetPath = $SteamExe
-$Shortcut.Arguments = $Flags
-$Shortcut.WorkingDirectory = $SteamDir
-$Shortcut.IconLocation = "$SteamExe,0"
-$Shortcut.Save()
-
-# Disable "Scale text and icons to match monitor settings" in config.vdf
-if (Test-Path $ConfigPath) {
-    $c = Get-Content $ConfigPath -Raw
-    if ($c -match '"HighDPISupport"\s+"[0-9]+"') {
-        $c = $c -replace '"HighDPISupport"\s+"[0-9]+"', '"HighDPISupport"    "0"'
-    } else {
-        $c = $c -replace '("config"\s*\r?\n\s*\{)', ('$1' + "`r`n`"HighDPISupport`"    `"0`"")
+# --- 0. Delete old Steam shortcuts everywhere ---
+$oldShortcuts = @(
+    "$env:USERPROFILE\Desktop\Steam.lnk"
+    "$env:PUBLIC\Desktop\Steam.lnk"
+    "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Steam.lnk"
+    "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Steam.lnk"
+)
+foreach ($s in $oldShortcuts) {
+    if (Test-Path $s) {
+        Remove-Item $s -Force
+        Write-Host "Deleted: $s" -ForegroundColor Yellow
     }
-    Set-Content $ConfigPath $c -NoNewline
 }
 
-# Set StartupPage to Library in localconfig.vdf
-$localFiles = Get-ChildItem "$SteamDir\userdata" -Recurse -Filter "localconfig.vdf"
-foreach ($f in $localFiles) {
-    $c = Get-Content $f.FullName -Raw
-    if ($c -match '"StartupPage"\s+"[0-9]+"') {
-        $c = $c -replace '"StartupPage"\s+"[0-9]+"', '"StartupPage"    "1"'
+# --- 1. Set default view to Library in sharedconfig.vdf ---
+$shared = Get-ChildItem "${env:ProgramFiles(x86)}\Steam\userdata" -Recurse -Filter "sharedconfig.vdf" | Select-Object -First 1
+if ($shared) {
+    $t = Get-Content $shared.FullName -Raw
+    if ($t -match '"SteamDefaultDialog"\s+"[^"]*"') {
+        $t = $t -replace '"SteamDefaultDialog"\s+"[^"]*"', '"SteamDefaultDialog"    "#app_games"'
     } else {
-        $c = $c -replace '("Steam"\s*\r?\n\s*\{)', ('$1' + "`r`n        `"StartupPage`"    `"1`"")
+        $t = $t -replace '("Steam")', '("Steam")
+            {
+                "SteamDefaultDialog"    "#app_games"
+            }'
     }
-    Set-Content $f.FullName $c -NoNewline
+    Set-Content $shared.FullName -Value $t -NoNewline
+    Write-Host "Library set as default." -ForegroundColor Green
+} else {
+    Write-Host "sharedconfig.vdf not found!" -ForegroundColor Red
 }
 
-# Restart Steam
-Start-Process $SteamExe -ArgumentList $Flags -WorkingDirectory $SteamDir
+# --- 2. Create new shortcut with all flags ---
+$flags = @(
+    "-nofriendsui"
+    "-no-dwrite"
+    "-nointro"
+    "-nobigpicture"
+    "-nofasthtml"
+    "-nocrashmonitor"
+    "-noshaders"
+    "-no-shared-textures"
+    "-disablehighdpi"
+    "-cef-single-process"
+    "-cef-in-process-gpu"
+    "-single_core"
+    "-disable-winh264"
+    "-vrdisable"
+    "-cef-disable-breakpad"
+    "-cef-disable-d3d11"
+    "-cef-disable-gpu-compositing"
+    "-cef-disable-gpu"
+    "-cef-disable-js-logging"
+    "-cef-disable-occlusion"
+    "-cef-disable-renderer-restart"
+    "-noconsole"
+    "-oldtraymenu"
+    "-showallbetas"
+    "+open steam://open/minigameslist"
+) -join " "
 
-Write-Host "Done. Steam restarted with all settings applied." -ForegroundColor Green   
+$wsh = New-Object -ComObject WScript.Shell
+$sc = $wsh.CreateShortcut($shortcutPath)
+$sc.TargetPath = $steamPath
+$sc.Arguments = $flags
+$sc.WorkingDirectory = Split-Path $steamPath
+$sc.IconLocation = "$steamPath, 0"
+$sc.Save()
+
+Write-Host "Done. New shortcut at: $shortcutPath" -ForegroundColor Green
+Write-Host "If Steam is pinned to taskbar, unpin it, launch from Desktop, then re-pin." -ForegroundColor Yellow   
