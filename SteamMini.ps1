@@ -1,4 +1,4 @@
-# Steam Full Setup - Kill, Fix DPI, Library, Autologin, Shortcut, Restart
+MiniSteam :)
 
 $steamPath = "C:\Program Files (x86)\Steam\Steam.exe"
 $shortcutPath = "$env:USERPROFILE\Desktop\Steam.lnk"
